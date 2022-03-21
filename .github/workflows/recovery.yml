@@ -34,8 +34,8 @@ jobs:
     - name: Initializing environment
       run: |
         sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
-        git config --global user.name "Hakimi0804"
-        git config --global user.email "hakimifirdaus944@gmail.com"
+        git config --global user.name "SriBalaji"
+        git config --global user.email "iam.thecloverly@pm.me"
         sudo -E apt-get clean
         sudo -E apt-get -qq update
         sudo -E apt-get -qq install bc build-essential zip curl libstdc++6 git wget python gcc clang libssl-dev repo rsync flex bison aria2
@@ -53,7 +53,6 @@ jobs:
         echo "-------- cherry-picking for erofs ----------------"
         git fetch https://github.com/Project-1CE/system_core lineage-18.1
         git cherry-pick b2dce4bd27fe5ef88690aa331f67359fb208d4c8
-        git cherry-pick 2ef3b59442f291e6230eef14c81b906752acf748
         cd ../..
         git clone https://github.com/Project-1CE/external_erofs-utils external/erofs-utils
         echo "--------------------------------------------------"
