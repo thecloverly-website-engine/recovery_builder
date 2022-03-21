@@ -1,0 +1,68 @@
+# This is taken from https://github.com/Area69Lab/Recovery-Builder-NoKernel
+# All credits goes to above repo
+
+name: Building recovery
+
+on:
+  workflow_dispatch:
+  watch:
+    types: [started]
+
+env:
+  MANIFEST: https://github.com/PitchBlackRecoveryProject/manifest_pb.git
+  MANIFEST_BRANCH: android-11.0
+  DEVICE: RMX2001
+  DT_LINK: https://github.com/Hakimi0804/android_device_realme_RMX2001-pbrp
+  DT_BRANCH: android-11.0
+  DT_PATH: device/realme/RMX2001
+  TARGET: pbrp
+  TZ: Asia/Kuala_Lumpur
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+  
+    - name: Docker
+      run: docker rmi `docker images -q`
+
+    - name: Cleaning up runner
+      uses: rokibhasansagar/slimhub_actions@main
+ 
+    - name: Initializing environment
+      run: |
+        sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
+        git config --global user.name "Hakimi0804"
+        git config --global user.email "hakimifirdaus944@gmail.com"
+        sudo -E apt-get clean
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install bc build-essential zip curl libstdc++6 git wget python gcc clang libssl-dev repo rsync flex bison aria2
+        df -h
+        sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://storage.googleapis.com/git-repo-downloads/repo
+        sudo chmod a+rx /usr/local/bin/repo
+    - name: Sync recovery source and device tree
+      run: |
+        mkdir work
+        cd work
+        repo init -u $MANIFEST -b $MANIFEST_BRANCH --depth=1 --groups=all,-notdefault,-device,-darwin,-x86,-mips
+        repo sync -j4
+        # git clone $DT_LINK --depth=1 --single-branch $DT_PATH
+        cd system/core
+        echo "-------- cherry-picking for erofs ----------------"
+        git fetch https://github.com/Project-1CE/system_core lineage-18.1
+        git cherry-pick b2dce4bd27fe5ef88690aa331f67359fb208d4c8
+        git cherry-pick 2ef3b59442f291e6230eef14c81b906752acf748
+        cd ../..
+        git clone https://github.com/Project-1CE/external_erofs-utils external/erofs-utils
+        echo "--------------------------------------------------"
+        git clone $DT_LINK --depth=1 --single-branch -b $DT_BRANCH $DT_PATH
+    - name: Build
+      run: |
+        cd work && export ALLOW_MISSING_DEPENDENCIES=true && . build/envsetup.sh && lunch omni_$DEVICE-eng && make -j6 pbrp
+    - name: Upload recovery image
+      run: |
+        cd work/out/target/product/$DEVICE
+        curl -sL https://git.io/file-transfer | sh
+        ./transfer wet recovery.img
