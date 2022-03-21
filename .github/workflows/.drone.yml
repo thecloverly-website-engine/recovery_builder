@@ -21,11 +21,8 @@ env:
   TARGET: pbrp
   TZ: Asia/Kuala_Lumpur
 
-    - name: Cleaning up runner
-      uses: rokibhasansagar/slimhub_actions@main
- 
     - name: Initializing environment
-      run: |
+      commands: |
         sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
         git config --global user.name "SriBalaji"
         git config --global user.email "iam.thecloverly@pm.me"
@@ -36,7 +33,7 @@ env:
         sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://storage.googleapis.com/git-repo-downloads/repo
         sudo chmod a+rx /usr/local/bin/repo
     - name: Sync recovery source and device tree
-      run: |
+      commands: |
         mkdir work
         cd work
         repo init -u $MANIFEST -b $MANIFEST_BRANCH --depth=1 --groups=all,-notdefault,-device,-darwin,-x86,-mips
@@ -51,10 +48,10 @@ env:
         echo "--------------------------------------------------"
         git clone $DT_LINK --depth=1 --single-branch -b $DT_BRANCH $DT_PATH
     - name: Build
-      run: |
+      commands: |
         cd work && export ALLOW_MISSING_DEPENDENCIES=true && . build/envsetup.sh && lunch omni_$DEVICE-eng && make -j6 pbrp
     - name: Upload recovery image
-      run: |
+      commands: |
         cd work/out/target/product/$DEVICE
         curl -sL https://git.io/file-transfer | sh
         ./transfer wet recovery.img
